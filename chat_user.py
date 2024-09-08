@@ -1,38 +1,8 @@
 import socket
 import threading
+import sys
 from time import sleep
-
-def receive_messages(client_socket):
-    while True:
-        try:
-            message = client_socket.recv(1024).decode('utf-8')
-            if message:
-                print(message)
-            else:
-                break
-        except socket.error as e:
-            print(f"Socket error while receiving message: {e}")
-            break
-        except Exception as e:
-            print(f"Unexpected error in receive_messages: {e}")
-            break
-
-def send_messages(client_socket):
-    while True:
-        try:
-            message = input()
-            if message.lower() == "exit chat":
-                client_socket.send(message.encode('utf-8'))
-                sleep(5)  # Wait for the server to process exit message
-                client_socket.close()
-                break
-            client_socket.send(message.encode('utf-8'))
-        except socket.error as e:
-            print(f"Socket error while sending message: {e}")
-            break
-        except Exception as e:
-            print(f"Unexpected error in send_messages: {e}")
-            break
+import os
 
 def getMainKey(key, offset=3):
     try:
@@ -42,17 +12,44 @@ def getMainKey(key, offset=3):
         print(f"Error decoding key: {e}")
         return ""
 
-try:
-    key = input("ENTER KEY : ")
-    client = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-    client.connect((getMainKey(key), 5555))
-    
-    recv_thread = threading.Thread(target=receive_messages, args=(client,))
-    recv_thread.start()
+def clear_console():
+    os.system('clear')
 
-    send_thread = threading.Thread(target=send_messages, args=(client,))
-    send_thread.start()
-except socket.error as e:
-    print(f"Socket error while connecting to server: {e}")
-except Exception as e:
-    print(f"Unexpected error in client setup: {e}")
+def handle_server_messages(client_socket):
+    while True:
+        try:
+            message = client_socket.recv(1024).decode('utf-8')
+            if message:
+                if message == "SERVER SHUTDOWN":
+                    print("..press enter to terminate program")
+                    break
+                else:
+                    clear_console()
+                    print(message)
+            else:
+                break
+        except socket.error as e:
+            break
+
+    client_socket.close()
+
+def main():
+    key = input("ENTER KEY : ")
+    client_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+    client_socket.connect((getMainKey(key), 5555))
+
+    threading.Thread(target=handle_server_messages, args=(client_socket,)).start()
+
+    while True:
+        try:
+            message = input("Enter : ").strip()
+            client_socket.send(message.encode('utf-8'))
+            if message.lower() == "exit chat":
+                break
+        except socket.error as e:
+            break
+
+    client_socket.close()
+
+if __name__ == "__main__":
+    main()
