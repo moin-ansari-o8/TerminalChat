@@ -25,7 +25,7 @@ def handle_server_messages(user_socket):
                     break
                 else:
                     clear_console()
-                    print(message)
+                    print(message+"\n\n")
             else:
                 break
         except socket.error as e:
