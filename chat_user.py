@@ -3,14 +3,19 @@ import threading
 import sys
 import os
 import msvcrt
+import base64
+import json
 
-def getMainKey(key, offset=3):
-    try:
-        main_key = "".join(chr(ord(char) - offset) for char in key.split("#") if char)
-        return main_key
-    except Exception as e:
-        print(f"Error decoding key: {e}")
-        return ""
+def getMainKey(encoded_data: str) -> (str, int): #type:ignore
+    # Decode the Base64 encoded data
+    decoded_json = base64.b64decode(encoded_data).decode()
+    
+    # Convert the JSON string back to a dictionary
+    data = json.loads(decoded_json)
+    
+    # Extract the IP and port from the dictionary
+    return data['ip'], data['port']
+
 
 def clear_console():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -26,7 +31,7 @@ def handle_server_messages(client_socket, typed_message_ref):
                 else:
                     clear_console()
                     print(message)
-                    print(f"Enter : {''.join(typed_message_ref)}", end='', flush=True)
+                    print(f"\nEnter : {''.join(typed_message_ref)}", end='', flush=True)
             else:
                 break
         except socket.error as e:
@@ -35,10 +40,10 @@ def handle_server_messages(client_socket, typed_message_ref):
     client_socket.close()
 
 def main():
-    key = input("ENTER KEY: ")
+    pasw = input("ENTER KEY: ")
+    key,way=getMainKey(pasw)
     client_socket = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-    client_socket.connect((getMainKey(key), 5555))
-
+    client_socket.connect((key,way))
     typed_message = []
     threading.Thread(target=handle_server_messages, args=(client_socket, typed_message)).start()
 
@@ -66,7 +71,7 @@ def main():
                         elif decoded_char == '*':
                             emoji_input = input(":)")
                             typed_message.append(emoji_input)
-                            print(f"\rConfirm : {''.join(typed_message)}", end='', flush=True)
+                            print(f"\n\rConfirm : {''.join(typed_message)}", end='', flush=True)
 
                         else:
                             typed_message.append(decoded_char)
