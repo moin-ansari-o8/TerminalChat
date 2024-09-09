@@ -3,6 +3,8 @@ import threading
 import msvcrt
 import requests
 import os
+import base64
+import json
 
 users = {}
 aliases = {}
@@ -20,13 +22,16 @@ def get_global_ipv6():
         print(f"Error fetching global IPv6 address: {e}")
         return None
 
-def encode_ipv6(ipv6_address, offset=3):
-    try:
-        encoded_ip = "".join(chr(ord(char) + offset) + "#" for char in ipv6_address)
-        return encoded_ip
-    except Exception as e:
-        print(f"Error encoding IPv6 address: {e}")
-        return ""
+def get_valid_way():
+    while True:
+        try:
+            valid_way = int(input("Enter Port: "))
+            if 0 <= valid_way <= 65535:
+                return valid_way
+            else:
+                print("Port number must be between 0 and 65535.")
+        except ValueError:
+            print("Invalid input. Please enter a valid integer for the port.")
 
 def handle_user(user_socket, user_address):
     try:
@@ -35,7 +40,7 @@ def handle_user(user_socket, user_address):
         aliases[user_socket] = alias
         user_last_pos[user_socket] = 0
 
-        user_socket.send(f"\nWELCOME TO CHATBOX {alias}\nNote:To enter Emoji press '*'\n".encode('utf-8'))
+        user_socket.send(f"\nWELCOME TO CHATBOX {alias}\nNote: To enter Emoji press '*'\n".encode('utf-8'))
         broadcast(f"'{alias}' joined the chat.", user_socket)
         
         while True:
@@ -48,7 +53,7 @@ def handle_user(user_socket, user_address):
                     break
                 broadcast(f"'{alias}' : {message}")
             except socket.error as e:
-                print("")
+                print(f"Error receiving message from {user_address}: {e}")
                 break
     except Exception as e:
         print(f"Error handling user {user_address}: {e}")
@@ -104,11 +109,11 @@ def kickout_user(alias):
 
 def print_message_to_console(message):
     # Clear the console (Unix/Linux-based systems)
-    os.system('clear')
+    os.system('cls' if os.name == 'nt' else 'clear')
 
     # Print the chat history in the console
-    print("\n".join(chat_history))
-    print(f"{message}\n\n")
+    print("\n".join(chat_history)+"\n")
+    # print(f"{message}\n\n")
 
 def server_send_messages():
     global server_running
@@ -117,12 +122,11 @@ def server_send_messages():
     while server_running:
         try:
             # Clear the console and print chat history
-            print_message_to_console(''.join(typed_message))  # Display the current input message
+            # print_message_to_console(''.join(typed_message))  # Display the current input message
 
             while True:
                 if msvcrt.kbhit():
                     char = msvcrt.getch()
-
                     try:
                         decoded_char = char.decode('utf-8')
 
@@ -150,13 +154,14 @@ def server_send_messages():
                                     return
                                 elif message == "list user":
                                     if users:
-                                        print("Connected users:")
+                                        print("\nConnected users:")
                                         for user_socket, address in users.items():
                                             user_name = aliases.get(user_socket, "Unknown")
                                             print(f"{user_name} : {address}")
                                     else:
                                         print("No users are currently connected.")
                                 else:
+                                    print_message_to_console(''.join(typed_message))
                                     broadcast(f"'{server_name}' : {message}")
 
                             typed_message.clear()
@@ -192,6 +197,8 @@ def accept_connections():
             print(f"Accepted connection from {addr}")
             user_handler = threading.Thread(target=handle_user, args=(user_socket, addr))
             user_handler.start()
+            server_message_thread = threading.Thread(target=server_send_messages)
+            server_message_thread.start()
 
         except socket.error as e:
             if server_running:
@@ -199,25 +206,38 @@ def accept_connections():
             else:
                 break
 
-# Initialize chat history as a list
-chat_history.clear()
+def encode(x: str, y: int) -> str:
+    # Create a dictionary with the string and integer
+    data = {'ip': x, 'port': y}
+    
+    # Convert the dictionary to a JSON string
+    json_str = json.dumps(data)
+    
+    # Encode the JSON string using Base64
+    encoded_data = base64.b64encode(json_str.encode()).decode()
+    
+    return encoded_data
+
+# Main Execution
+server_name = input("Enter Server Name: ")
+port = get_valid_way()
 
 server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 try:
-    server.bind(("::", 5555))
+    server.bind(("::", port))
     server.listen(5)
 except socket.error as e:
     print(f"Error setting up server socket: {e}")
     exit(1)
 
-server_name = input("Enter server name: ")
 global_ipv6 = get_global_ipv6()
 if global_ipv6:
-    encoded_ipv6 = encode_ipv6(global_ipv6)
+    encoded_ipv6 = encode(global_ipv6, port)
     print("KEY TO CHATROOM : ", encoded_ipv6)
+
 print("Chat room started...")
 
-server_message_thread = threading.Thread(target=server_send_messages)
-server_message_thread.start()
+# Start server message handling in a separate thread
 
+# Accept and handle connections
 accept_connections()
