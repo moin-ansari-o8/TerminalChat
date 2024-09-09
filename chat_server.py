@@ -122,14 +122,13 @@ def server_send_messages():
     while server_running:
         try:
             # Clear the console and print chat history
-            # print_message_to_console(''.join(typed_message))  # Display the current input message
+            print_message_to_console(''.join(typed_message))  # Display the current input message
 
             while True:
                 if msvcrt.kbhit():
                     char = msvcrt.getch()
                     try:
                         decoded_char = char.decode('utf-8')
-
                         if decoded_char == '\r':  # Enter key pressed
                             message = ''.join(typed_message).strip()
                             if message:
@@ -145,6 +144,7 @@ def server_send_messages():
                                     time.sleep(2)
                                     for user_socket in list(users.keys()):
                                         try:
+                     
                                             user_socket.send("SERVER SHUTDOWN".encode('utf-8'))
                                             user_socket.close()
                                         except socket.error as e:
@@ -161,7 +161,7 @@ def server_send_messages():
                                     else:
                                         print("No users are currently connected.")
                                 else:
-                                    print_message_to_console(''.join(typed_message))
+                                    # print_message_to_console(''.join(typed_message))
                                     broadcast(f"'{server_name}' : {message}")
 
                             typed_message.clear()
