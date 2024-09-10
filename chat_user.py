@@ -7,15 +7,9 @@ import base64
 import json
 
 def getMainKey(encoded_data: str) -> (str, int): #type:ignore
-    # Decode the Base64 encoded data
     decoded_json = base64.b64decode(encoded_data).decode()
-    
-    # Convert the JSON string back to a dictionary
     data = json.loads(decoded_json)
-    
-    # Extract the IP and port from the dictionary
     return data['ip'], data['port']
-
 
 def clear_console():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -36,7 +30,6 @@ def handle_server_messages(client_socket, typed_message_ref):
                 break
         except socket.error as e:
             break
-
     client_socket.close()
 
 def main():
@@ -46,44 +39,35 @@ def main():
     client_socket.connect((key,way))
     typed_message = []
     threading.Thread(target=handle_server_messages, args=(client_socket, typed_message)).start()
-
     while True:
         try:
             while True:
                 if msvcrt.kbhit():
                     char = msvcrt.getch()
-
                     try:
                         decoded_char = char.decode('utf-8')
-
                         if decoded_char == '\r':
                             client_socket.send(''.join(typed_message).encode('utf-8'))
                             if ''.join(typed_message).lower() == "exit chat":
                                 return
                             typed_message.clear()
                             print()
-
                         elif decoded_char == '\x08':
                             if typed_message:
                                 typed_message.pop()
                                 print(f"\rEnter : {''.join(typed_message)} ", end='', flush=True)
-
                         elif decoded_char == '*':
                             emoji_input = input(":)")
                             typed_message.append(emoji_input)
                             print(f"\n\rConfirm : {''.join(typed_message)}", end='', flush=True)
-
                         else:
                             typed_message.append(decoded_char)
                             print(f"\rEnter : {''.join(typed_message)}", end='', flush=True)
-
                     except UnicodeDecodeError:
                         pass
-
         except socket.error as e:
             print(f"Error sending message: {e}")
             break
-
     client_socket.close()
 
 if __name__ == "__main__":
