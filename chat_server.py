@@ -10,7 +10,7 @@ users = {}
 aliases = {}
 user_last_pos = {}
 server_running = True
-chat_history = []
+chat_history = [];MAX_HISTORY_SIZE = 100
 
 def get_global_ipv6():
     try:
@@ -39,10 +39,8 @@ def handle_user(user_socket, user_address):
         alias = user_socket.recv(1024).decode('utf-8').strip()
         aliases[user_socket] = alias
         user_last_pos[user_socket] = 0
-
         user_socket.send(f"\nWELCOME TO CHATBOX {alias}\nNote: To enter Emoji press '*'\n".encode('utf-8'))
         broadcast(f"'{alias}' joined the chat.", user_socket)
-        
         while True:
             try:
                 message = user_socket.recv(1024).decode('utf-8').strip()
@@ -62,12 +60,10 @@ def handle_user(user_socket, user_address):
         remove_user(user_socket)
 
 def broadcast(message, user_socket=None):
-    # Add the message to the chat history
+    if len(chat_history) >= MAX_HISTORY_SIZE:
+        chat_history.pop(0)  
     chat_history.append(message)
-    
     print_message_to_console(message)
-
-    # Send the chat history to all users except the sender
     to_remove = []
     for user in list(users.keys()):
         if user != user_socket:
@@ -76,7 +72,6 @@ def broadcast(message, user_socket=None):
             except socket.error as e:
                 print(f"Error broadcasting message to {aliases.get(user, 'Unknown')}: {e}")
                 to_remove.append(user)
-
     for user in to_remove:
         remove_user(user)
 
@@ -95,7 +90,6 @@ def kickout_user(alias):
         if user_alias == alias:
             user_socket = socket
             break
-
     if user_socket:
         try:
             user_socket.send("You have been kicked out by the server.".encode('utf-8'))
@@ -108,28 +102,21 @@ def kickout_user(alias):
         print(f"Error: No user with name '{alias}' found.")
 
 def print_message_to_console(message):
-    # Clear the console (Unix/Linux-based systems)
     os.system('cls' if os.name == 'nt' else 'clear')
-
-    # Print the chat history in the console
     print("\n".join(chat_history)+"\n")
-    # print(f"{message}\n\n")
 
 def server_send_messages():
     global server_running
-    typed_message = []  # Track the message being typed
-
+    typed_message = []  
     while server_running:
         try:
-            # Clear the console and print chat history
-            print_message_to_console(''.join(typed_message))  # Display the current input message
-
+            print_message_to_console(''.join(typed_message))  
             while True:
                 if msvcrt.kbhit():
                     char = msvcrt.getch()
                     try:
                         decoded_char = char.decode('utf-8')
-                        if decoded_char == '\r':  # Enter key pressed
+                        if decoded_char == '\r':  
                             message = ''.join(typed_message).strip()
                             if message:
                                 if message.startswith("remove "):
@@ -144,7 +131,6 @@ def server_send_messages():
                                     time.sleep(2)
                                     for user_socket in list(users.keys()):
                                         try:
-                     
                                             user_socket.send("SERVER SHUTDOWN".encode('utf-8'))
                                             user_socket.close()
                                         except socket.error as e:
@@ -154,42 +140,36 @@ def server_send_messages():
                                     return
                                 elif message == "list user":
                                     if users:
-                                        print("\nConnected users:")
+                                        print("Connected users:")
                                         for user_socket, address in users.items():
                                             user_name = aliases.get(user_socket, "Unknown")
                                             print(f"{user_name} : {address}")
+                                            time.sleep(3)
                                     else:
                                         print("No users are currently connected.")
                                 else:
-                                    # print_message_to_console(''.join(typed_message))
                                     broadcast(f"'{server_name}' : {message}")
-
                             typed_message.clear()
                             break
-
-                        elif decoded_char == '\x08':  # Backspace key pressed
+                        elif decoded_char == '\x08':  
                             if typed_message:
                                 typed_message.pop()
                                 print(f"\rEnter : {''.join(typed_message)}", end='', flush=True)
-
-                        elif decoded_char == '*':  # Emoji input
+                        elif decoded_char == '*':  
                             emoji_input = input(":)")
                             typed_message.append(emoji_input)
                             print(f"\rConfirm : {''.join(typed_message)}", end='', flush=True)
-
                         else:
                             typed_message.append(decoded_char)
                             print(f"\rEnter : {''.join(typed_message)}", end='', flush=True)
-
                     except UnicodeDecodeError:
                         pass
-
         except Exception as e:
             print(f"Error in server message handling: {e}")
 
 def accept_connections():
     global server_running
-
+    ct=1
     while server_running:
         try:
             user_socket, addr = server.accept()
@@ -197,9 +177,10 @@ def accept_connections():
             print(f"Accepted connection from {addr}")
             user_handler = threading.Thread(target=handle_user, args=(user_socket, addr))
             user_handler.start()
-            server_message_thread = threading.Thread(target=server_send_messages)
-            server_message_thread.start()
-
+            if ct==1:
+                server_message_thread = threading.Thread(target=server_send_messages)
+                server_message_thread.start()
+                ct=0
         except socket.error as e:
             if server_running:
                 print(f"Error accepting connection: {e}")
@@ -207,21 +188,13 @@ def accept_connections():
                 break
 
 def encode(x: str, y: int) -> str:
-    # Create a dictionary with the string and integer
     data = {'ip': x, 'port': y}
-    
-    # Convert the dictionary to a JSON string
     json_str = json.dumps(data)
-    
-    # Encode the JSON string using Base64
     encoded_data = base64.b64encode(json_str.encode()).decode()
-    
     return encoded_data
 
-# Main Execution
 server_name = input("Enter Server Name: ")
 port = get_valid_way()
-
 server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 try:
     server.bind(("::", port))
@@ -229,15 +202,9 @@ try:
 except socket.error as e:
     print(f"Error setting up server socket: {e}")
     exit(1)
-
 global_ipv6 = get_global_ipv6()
 if global_ipv6:
     encoded_ipv6 = encode(global_ipv6, port)
     print("KEY TO CHATROOM : ", encoded_ipv6)
-
 print("Chat room started...")
-
-# Start server message handling in a separate thread
-
-# Accept and handle connections
 accept_connections()
