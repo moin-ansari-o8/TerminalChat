@@ -11,7 +11,7 @@ aliases = {}
 user_last_pos = {}
 server_running = True
 chat_history = [];MAX_HISTORY_SIZE = 100
-
+print("this is server program")
 def get_global_ipv6():
     try:
         response = requests.get('https://api64.ipify.org?format=json')
