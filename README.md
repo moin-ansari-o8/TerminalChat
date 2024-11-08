@@ -15,28 +15,20 @@ TerminalChat enables users to create a chat server using a command-line interfac
 - **Emoji Support**: Users can add emojis to their messages by pressing `*`.
 
 ## How to Run the Program
-
-### Running the Server
-
 1. Clone the repository.
-2. Run the main program to start the server:
-   ```bash
+2. Run the main program:
+```bash
    python main.py
-   ```
-3. Select the server option by entering 1.
-4. Enter a unique server name and specify a valid port number.
-5. A KEY TO CHATROOM will be generated and displayed. Share this key with clients to allow them to join.
+```
+3. To start the Server:
+   - Select the server option by entering 1.
+   - Enter a unique server name and specify a valid port number.
+   - A KEY TO CHATROOM will be generated and displayed. Share this key with clients to allow them to join.
 
-### Running the Client
-
-1. Clone the repository.
-2. Run the main program to start the client:
-   ```bash
-   python main.py
-   ```
-3. Select the client option by entering 2.
-4. Enter the KEY TO CHATROOM provided by the server admin.
-5. Type messages and communicate with other users.
+4. Running as the Client:
+   - Select the client option by entering 2.
+   - Enter the KEY TO CHATROOM provided by the server admin.
+   - Type messages and communicate with other users.
 
 ## Contributing
 
