@@ -19,23 +19,24 @@ TerminalChat enables users to create a chat server using a command-line interfac
 ### Running the Server
 
 1. Clone the repository.
-2. Run the server program:
+2. Run the main program to start the server:
    ```bash
-   python chat_server.py
+   python main.py
    ```
-3. Enter the server name and a valid port number.
-4. The program will display a KEY TO CHATROOM (an encoded string).
-5. Share this key with users to allow them to join the chatroom.
+3. Select the server option by entering 1.
+4. Enter a unique server name and specify a valid port number.
+5. A KEY TO CHATROOM will be generated and displayed. Share this key with clients to allow them to join.
 
 ### Running the Client
 
 1. Clone the repository.
-2. Run the client program:
+2. Run the main program to start the client:
    ```bash
-   python chat_user.py
+   python main.py
    ```
-3. Enter the KEY TO CHATROOM provided by the server.
-4. Type messages and communicate with other users.
+3. Select the client option by entering 2.
+4. Enter the KEY TO CHATROOM provided by the server admin.
+5. Type messages and communicate with other users.
 
 ## Contributing
 
@@ -46,3 +47,4 @@ Contributions are welcome! If you find any issues or have suggestions for new fe
 For any questions or feedback, please contact:
 
 - **Email**: moin.edu01@gmail.com
+- **LinkedIn**: [Moin Ansari](https://www.linkedin.com/in/moin-ansari1817/)
