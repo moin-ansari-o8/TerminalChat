@@ -1,6 +1,7 @@
 import socket
 import threading
 import sys
+import os
 if os.name == 'nt':  # For Windows
     import msvcrt
 
@@ -20,7 +21,6 @@ else:  # For Linux/Termux
             termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
         return ch
 import requests
-import os
 import base64
 import json
 #serverside codes
