@@ -1,6 +1,24 @@
 import socket
 import threading
-import msvcrt
+import sys
+if os.name == 'nt':  # For Windows
+    import msvcrt
+
+    def getch():
+        return msvcrt.getch()
+else:  # For Linux/Termux
+    import termios
+    import tty
+
+    def getch():
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(fd)
+            ch = sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        return ch
 import requests
 import os
 import base64
