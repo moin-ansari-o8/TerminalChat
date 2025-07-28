@@ -1,8 +1,26 @@
 import socket
 import threading
-import msvcrt
-import requests
+import sys
 import os
+if os.name == 'nt':  # For Windows
+    import msvcrt
+
+    def getch():
+        return msvcrt.getch()
+else:  # For Linux/Termux
+    import termios
+    import tty
+
+    def getch():
+        fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(fd)
+        try:
+            tty.setraw(fd)
+            ch = sys.stdin.read(1)
+        finally:
+            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
+        return ch
+import requests
 import base64
 import json
 #serverside codes
@@ -104,8 +122,8 @@ def server_send_messages():
         try:
             print_message_to_console(''.join(typed_message))  
             while True:
-                if msvcrt.kbhit():
-                    char = msvcrt.getch()
+                if os.name == 'nt' and msvcrt.kbhit():
+                    char = getch()
                     try:
                         decoded_char = char.decode('utf-8')
                         if decoded_char == '\r':  
@@ -136,6 +154,7 @@ def server_send_messages():
                                         for user_socket, address in users.items():
                                             user_name = aliases.get(user_socket, "Unknown")
                                             print(f"{user_name} : {address}")
+                                            import time
                                             time.sleep(3)
                                     else:
                                         print("No users are currently connected.")
@@ -239,8 +258,8 @@ if __name__ == "__main__":
             while True:
                 try:
                     while True:
-                        if msvcrt.kbhit():
-                            char = msvcrt.getch()
+                        if os.name == 'nt' and msvcrt.kbhit():
+                            char = getch()
                             try:
                                 decoded_char = char.decode('utf-8')
                                 if decoded_char == '\r':
